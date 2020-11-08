@@ -1,0 +1,25 @@
+{
+  "name": "diff-description",
+  "version": "1.0.0",
+  "description": "Describe the difference between two objects",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --glob '*.spec.js' test --recursive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dankuck/diff-description.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dankuck/diff-description/issues"
+  },
+  "homepage": "https://github.com/dankuck/diff-description#readme",
+  "devDependencies": {
+    "mocha": "^8.2.1"
+  },
+  "dependencies": {
+    "deep-diff": "^1.0.2"
+  }
+}
