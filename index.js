@@ -105,11 +105,11 @@ module.exports = function diffDescription(before, after, prefix = '', classStrin
     return diffs
         .map(diff => {
     console.log(diff);
-            // if (diff.kind === 'A') {
-            //     return arrayDescription(diff, prefix, classStringifier);
-            // } else {
+            if (diff.kind === 'A') {
+                return arrayDescription(diff, prefix, classStringifier);
+            } else {
                 return regularDescription(diff, prefix, classStringifier);
-            // }
+            }
         })
         .join('; ');
 };

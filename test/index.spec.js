@@ -193,7 +193,7 @@ describe('diffDescription', function () {
             equal('[0] = 0', desc);
         });
 
-        it.only('describes an array unshift', function () {
+        it('describes an array unshift', function () {
             const before = [1, 2];
             const after = [0, 1, 2];
             const desc = diffDescription(before, after);
