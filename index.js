@@ -1,4 +1,5 @@
 const deepDiff = require('deep-diff');
+const arraySplices = require('./arraySplices');
 
 const tokenRegexp = /^[a-z_][0-9a-z_]*$/i;
 
@@ -37,12 +38,16 @@ function valueString(value, classStringifier) {
 
 function arrayDescription(diff, prefix, classStringifier) {
     const {kind} = diff.item;
+    console.log('item', diff.item);
     if (kind === 'N') {
         const path = pathString((diff.path || []).concat('push'), prefix);
         return path + '(' + valueString(diff.item.rhs, classStringifier) + ')';
     } else if (kind === 'D') {
         const path = pathString((diff.path || []).concat('pop'), prefix);
         return path + '()';
+    // } else if (kind === UNSHIFT) {
+    //     const path = pathString((diff.path || []).concat('unshift'), prefix);
+    //     return path + '(' + valueString(diff.item.rhs, classStringifier) + ')';
     } else {
         console.error(diff);
     }
@@ -56,7 +61,7 @@ function regularDescription(diff, prefix, classStringifier) {
     } else if (kind === 'D') {
         return 'delete ' + path;
     } else {
-        console.error(diff);
+        console.error('not found', diff);
     }
 }
 
@@ -76,35 +81,71 @@ function groupByPath(diffs) {
     return Object.values(groups);
 }
 
-function convertToArrayInsert(diffs) {
-    diffs = [...diffs];
-    const arrayDiffs = diffs.filter(diff => diff.kind === 'A');
-    arrayDiffs.forEach(arrayDiff => {
-        diffs = diffs.filter(diff => diff !== arrayDiff);
-        const {index} = arrayDiff;
-        let n = index;
-        // const
+function convertToArrayInsert(diffs, path, before, after) {
+    const diffsByIndex = {};
+    diffs.forEach(diff => {
+        const path = diff.path || [];
+        const index = Reflect.has(diff, 'index')
+                ? diff.index
+                : path[path.length - 1];
+        diffsByIndex[index] = diff;
     });
-
+    diffs = [...diffs];
+    // DiffDeleted and DiffNew in an array diff always happen at the end.
+    // There may be several DiffDeleted, or several DiffNew, but there will
+    // never be both, because otherwise they would be assignments.
+    // So to detect an insert, we only need to find the earliest DiffNew and
+    // follow back to the earliest edit before that.
+    const indexes = Object.keys(diffsByIndex).sort();
+    const diffNews = indexes.filter(
+        index => diffsByIndex[index].kind === 'A' && diffsByIndex[index].item.kind === 'N'
+    );
+    if (diffNews.length === 0) {
+        return null;
+    }
+    const begin = indexes[0];
+    const beforeArray = get(before, path);
+    const afterArray = get(after, path);
+    // Everything before `begin` matches. arraySplices will check if anything in the
+    // remaining area matches.
+    return arraySplices(
+        beforeArray.slice(begin),
+        afterArray.slice(begin),
+        begin,
+        begin,
+        path
+    );
 }
+
+function get(object, path) {
+    for (let field of path) {
+        if (object) {
+            object = object[field];
+        } else {
+            return undefined;
+        }
+    }
+    return object;
+}
+
+const SPLICE = Symbol('SPLICE');
 
 module.exports = function diffDescription(before, after, prefix = '', classStringifier = defaultClassStringifier) {
     const diffs = deepDiff(before, after) || [];
-    console.log(
-    groupByPath(diffs)
+    const groups = groupByPath(diffs)
         .map(group => {
-            const arrayConverted = convertToArrayInsert(group.diffs);
+            const arrayConverted = convertToArrayInsert(group.diffs, group.path, before, after);
             if (arrayConverted) {
                 return arrayConverted;
             } else {
                 return group.diffs;
             }
-        })
-    );
-        // .flat()
-    return diffs
+        });
+    console.log(groups);
+    // return diffs
+    return groups
+        .flat()
         .map(diff => {
-    console.log(diff);
             if (diff.kind === 'A') {
                 return arrayDescription(diff, prefix, classStringifier);
             } else {
@@ -112,4 +153,8 @@ module.exports = function diffDescription(before, after, prefix = '', classStrin
             }
         })
         .join('; ');
+};
+
+module.exports.test = {
+    arraySplices,
 };
