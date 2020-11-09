@@ -5,7 +5,7 @@ const {
     notDeepStrictEqual: notEqual,
 } = assert;
 
-describe.skip('diffDescription', function () {
+describe('diffDescription', function () {
 
     describe('object changes', function () {
 
@@ -172,7 +172,7 @@ describe.skip('diffDescription', function () {
             equal('push(2)', desc);
         });
 
-        it.only('describes an array pop', function () {
+        it('describes an array pop', function () {
             const before = [1, 2];
             const after = [1];
             const desc = diffDescription(before, after);
@@ -193,7 +193,7 @@ describe.skip('diffDescription', function () {
             equal('[0] = 0', desc);
         });
 
-        it.only('describes an array unshift', function () {
+        it('describes an array unshift', function () {
             const before = [1, 2];
             const after = [0, 1, 2];
             const desc = diffDescription(before, after);
@@ -204,14 +204,36 @@ describe.skip('diffDescription', function () {
             const before = [1, 2];
             const after = [1, 'a', 'b', 2];
             const desc = diffDescription(before, after);
-            equal("splice(1, ['a', 'b'])", desc);
+            equal('splice(1, 0, "a", "b")', desc);
         });
 
-        it('describes an array split-in at end');
+        it('describes an array splice-in at end', function () {
+            const before = [1, 2];
+            const after = [1, 2, 3, 4];
+            const desc = diffDescription(before, after);
+            equal('splice(2, 0, 3, 4)', desc);
+        });
 
-        it('describes a non-insert bunch of assignments');
+        it('describes a non-insert bunch of assignments', function () {
+            const before = [1, 2, 3, 4, 5, 6];
+            const after = [1, 10, 3, 20, 5, 6];
+            const desc = diffDescription(before, after);
+            equal('[3] = 20; [1] = 10', desc);
+        });
 
-        it('describes a splice-out');
+        it('describes a splice-out', function () {
+            const before = [1, 2, 3, 4];
+            const after = [1, 4];
+            const desc = diffDescription(before, after);
+            equal('splice(1, 2)', desc);
+        });
+
+        it('describes a shift', function () {
+            const before = [1, 2, 3];
+            const after = [2, 3];
+            const desc = diffDescription(before, after);
+            equal('shift()', desc);
+        });
     });
 
     describe('path looks like JS', function () {
